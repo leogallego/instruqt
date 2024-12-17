@@ -1,0 +1,54 @@
+slug: controller-101-aap25
+id: fzefxbbr8ajr
+title: Introduction to Ansible automation controller - AAP 2.5
+teaser: Explore Ansible automation controller, part of the web-based UI interface
+  for Red Hat Ansible Automation Platform and learn how to run your playbooks without
+  using the command line.
+description: |
+  # Introduction to Ansible automation controller
+
+  Welcome to our interactive lab on Ansible automation controller, the web-based UI interface for Red Hat Ansible Automation Platform for executing and managing your playbooks.
+
+  In this lab, we will demonstrate how easy it is to use Ansible Automation Platform's automation controller by running some of the playbooks from the "Writing your first playbook" laboratory.
+
+  No prior knowledge is required. This intro laboratory is useful for both, beginners and experienced Ansible users. We will create an **Inventory** to manage our servers, import our playbooks into **Projects**, create **Job Templates** to run the them and finally, create a condition based **Workflow** .
+
+
+
+  This lab covers the following topics for automation controller:
+
+  * Exploring the Overview and web-UI interface
+  * Creating and managing our `Inventory`
+  * How to import playbooks through `Projects`
+  * How to create `Job Templates` to run our playbooks
+  * Understanding the `Credentials` feature to configure authentication
+  * How to create  `Workflow Templates` linking different playbooks through conditions
+
+  We will also explore a few of the additional features in the automation controller that can help with your enterprise automation needs, and we will dive deeper into them in a future laboratory.
+
+  You can find more information about on [Ansible.com](https://www.ansible.com/) and join
+icon: https://www.ansible.com/hubfs/Logo-Red_Hat-Ansible-A-Reverse-SVG.svg
+tags:
+- controller
+- automation
+- ansible
+- gettingstarted
+- infrastructure
+owner: redhat
+developers:
+- lgallego@redhat.com
+show_timer: true
+skipping_enabled: true
+idle_timeout: 1800
+timelimit: 3300
+lab_config:
+  extend_ttl: 1800
+  feedback_recap_enabled: true
+  feedback_tab_enabled: false
+  loadingMessages: true
+  override_challenge_layout: false
+  hideStopButton: true
+  default_layout: AssignmentRight
+  default_layout_sidebar_size: 33
+checksum: "1202460759055993838"
+enhanced_loading: false

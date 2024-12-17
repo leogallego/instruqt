@@ -1,0 +1,147 @@
+#!/bin/bash
+
+## fix dns resolution in automation-controller rhel9 image
+echo "search $_SANDBOX_ID.svc.cluster.local." >> /etc/resolv.conf
+
+## wait for instruqt boot
+set -euxo pipefail
+while [ ! -f /opt/instruqt/bootstrap/host-bootstrap-completed ]
+do
+    echo "Waiting for Instruqt to finish booting the VM"
+    sleep 1
+done
+
+## set user name
+USER=rhel
+CONTROLLER_FQDN=control.${_SANDBOX_ID}.svc.cluster.local
+
+## setup rhel user
+touch /etc/sudoers.d/rhel_sudoers
+echo "%rhel ALL=(ALL:ALL) NOPASSWD:ALL" > /etc/sudoers.d/rhel_sudoers
+cp -a /root/.ssh/* /home/$USER/.ssh/.
+chown -R rhel:rhel /home/$USER/.ssh
+
+
+## ansible home
+mkdir /home/$USER/ansible
+## ansible-files dir
+mkdir /home/$USER/ansible-files
+
+## ansible.cfg
+echo "[defaults]" > /home/$USER/.ansible.cfg
+echo "inventory = /home/$USER/ansible-files/hosts" >> /home/$USER/.ansible.cfg
+echo "host_key_checking = False" >> /home/$USER/.ansible.cfg
+
+## chown and chmod all files in rhel user home
+chown -R rhel:rhel /home/$USER/ansible
+chmod 777 /home/$USER/ansible
+#touch /home/rhel/ansible-files/hosts
+chown -R rhel:rhel /home/$USER/ansible-files
+
+## git setup
+git config --global user.email "rhel@example.com"
+git config --global user.name "Red Hat"
+su - $USER -c 'git config --global user.email "rhel@example.com"'
+su - $USER -c 'git config --global user.name "Red Hat"'
+
+
+## set ansible-navigator default settings
+## for the EE to work we need to pass env variables
+## TODO: controller_host doesnt resolve with control and 127.0.0.1
+## is interpreted within the EE
+su - $USER -c 'cat >/home/$USER/ansible-navigator.yml <<EOL
+---
+ansible-navigator:
+  ansible:
+    inventory:
+      entries:
+      - /home/rhel/ansible-files/hosts
+  execution-environment:
+    container-engine: podman
+    enabled: true
+    image: registry.redhat.io/ansible-automation-platform-25/ee-supported-rhel9
+    pull:
+      policy: missing
+    environment-variables:
+      pass:
+        - CONTROLLER_USERNAME
+        - CONTROLLER_PASSWORD
+        - CONTROLLER_VERIFY_SSL
+      set:
+        CONTROLLER_HOST: control.${_SANDBOX_ID}.svc.cluster.local
+  logging:
+    level: debug
+  mode: stdout
+  playbook-artifact:
+    save-as: /home/rhel/{playbook_name}-artifact-{time_stamp}.json
+
+EOL
+cat /home/$USER/ansible-navigator.yml'
+
+## copy navigator settings
+su - $USER -c 'cp /home/$USER/ansible-navigator.yml /home/$USER/.ansible-navigator.yml'
+su - $USER -c 'cp /home/$USER/ansible-navigator.yml /home/$USER/ansible-files/ansible-navigator.yml'
+
+
+## set inventory hosts for commandline ansible
+su - $USER -c 'cat >/home/$USER/ansible-files/hosts <<EOL
+[web]
+node1
+node2
+
+[database]
+node3
+
+[controller]
+control
+
+EOL
+cat /home/$USER/ansible-files/hosts'
+## end inventory hosts
+
+## chown and chmod all files in rhel user home
+chown -R rhel:rhel /home/rhel/ansible
+chmod 777 /home/rhel/ansible
+#touch /home/rhel/ansible-files/hosts
+chown -R rhel:rhel /home/rhel/ansible-files
+
+
+## Set controller access env variables for system
+cat >/etc/environment <<EOL
+CONTROLLER_HOST=control.${_SANDBOX_ID}.svc.cluster.local
+CONTROLLER_USERNAME=admin
+CONTROLLER_PASSWORD='ansible123!'
+CONTROLLER_VERIFY_SSL=false
+
+EOL
+cat /etc/environment
+## end environment vars
+
+## Set controller access env variables
+export CONTROLLER_HOST=control.${_SANDBOX_ID}.svc.cluster.local
+export CONTROLLER_USERNAME=admin
+export CONTROLLER_PASSWORD='ansible123!'
+export CONTROLLER_VERIFY_SSL=false
+## end environment vars
+
+
+## disable useless repos
+dnf config-manager --disable google*
+dnf config-manager --disable *source*
+dnf config-manager --disable *debug*
+
+## install ansible-navigator
+dnf install -y python3-pip 
+su - $USER -c 'python3 -m pip install ansible-navigator --user'
+echo 'export PATH=$HOME/.local/bin:$PATH' >> /home/$USER/.profile
+echo 'export PATH=$HOME/.local/bin:$PATH' >> /etc/profile
+
+# Get playbook from repo
+/usr/bin/curl https://raw.githubusercontent.com/leogallego/instruqt-controller-101/refs/heads/main/lifecycle-scripts/controller-101-setup-playbook-aap25.yml -o /tmp/controller-101-setup.yml
+
+## clone summit 2024 repo
+git clone https://github.com/leogallego/instruqt-controller-101.git /tmp/controller-101-2024
+
+
+# Use playbook to setup environment
+#/bin/ansible-playbook /tmp/controller-101-setup.yml --tags setup-env
