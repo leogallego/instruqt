@@ -1,0 +1,2 @@
+docker compose --project-directory=/tmp/netbox-docker pull 
+docker compose --project-directory=/tmp/netbox-docker up -d
