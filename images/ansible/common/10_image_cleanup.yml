@@ -12,10 +12,11 @@
     remove: true
   loop: "{{ __standard_users.stdout_lines }}"
   when:
-    - item != ansible_user
+    - ansible_user is defined and item != ansible_user
     - item != "awx"
     - item != "pulp"
-    - item != student_username
+    - student_username is defined and item != student_username
+## added is defined above for student_username for standalone dev-tools image
 
 - name: Disable dnf automatic services
   ansible.builtin.service:
@@ -83,9 +84,12 @@
   become_user: "{{ item }}"
   containers.podman.podman_logout:
     all: true
-  no_log: true
+  no_log: false
   loop:
     - "{{ student_username }}"
     - awx
     - root
     - "{{ ansible_user }}"
+  when: student_username is defined and ansible_user is defined
+## added is defined above for student_username for standalone dev-tools image
+

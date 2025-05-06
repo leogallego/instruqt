@@ -3,7 +3,8 @@
   ansible.builtin.dnf:
     name:
       - "{{ codeserver_url }}"
-      - certbot
+## commented for standalone dev-tools image      
+#      - certbot
     state: present
     disable_gpg_check: true
   register: __dnf_result
@@ -89,8 +90,11 @@
     state: started
     daemon_reload: true
 
-- name: Editor block - update nginx configuration to support code server
-  ansible.builtin.blockinfile:
-    block: "{{ lookup('template', 'nginx_instruqt.conf') }}"
-    dest: /etc/nginx/conf.d/automation-controller.nginx.conf
-    insertbefore: "location / "
+## commented for standalone dev-tools, might be needed for controller labs
+#- name: Editor block - update nginx configuration to support code server
+#  ansible.builtin.blockinfile:
+#    block: "{{ lookup('template', 'nginx_instruqt.conf') }}"
+#    dest: /etc/nginx/conf.d/automation-controller.nginx.conf
+#    insertbefore: "location / "
+#  when: aap_include_controller is defined and aap_include_controller | bool
+

@@ -1,0 +1,49 @@
+variable "project_id" {
+    type    = string
+    default = "red-hat-mbu"
+}
+
+variable "zone" {
+    type    = string
+    default = "us-east1-d"
+}
+
+variable "image_name" {
+    type    = string
+    default = "ansible-dev-tools-v252"
+}
+
+variable "ansible_vars_file" {
+    type    = string
+    default = null
+}
+
+local "extra_args" {
+    expression = var.ansible_vars_file != null ? ["-e", "@images/ansible/extra-vars.yml", "-e", "ansible_python_interpreter=/usr/bin/python3", "-e", var.ansible_vars_file] : ["-e", "@images/ansible/extra-vars.yml", "-e", "ansible_python_interpreter=/usr/bin/python3", "--scp-extra-args", "'-O'"]
+}
+
+source "googlecompute" "ansible-dev-tools-v252" {
+    project_id          = var.project_id
+    source_image        = "rhel9"
+    ssh_username        = "rhel"
+    zone                = var.zone
+    machine_type        = "n1-standard-2"
+    image_name          = var.image_name
+}
+
+build {
+    sources = ["sources.googlecompute.ansible-dev-tools-v252"]
+
+    provisioner "shell" {
+        inline = [
+            "sudo dnf install -y openssh-server",
+            "sudo systemctl restart sshd"
+        ]
+    }
+    provisioner "ansible" {
+        playbook_file = "${path.root}/../ansible/ansible-dev-tools-setup.yml"
+        user = "rhel"
+      extra_arguments = local.extra_args
+    }
+}
+
