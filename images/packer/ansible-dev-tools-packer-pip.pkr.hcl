@@ -10,7 +10,7 @@ variable "zone" {
 
 variable "image_name" {
     type    = string
-    default = "ansible-dev-tools-v252"
+    default = "ansible-dev-tools-pip"
 }
 
 variable "ansible_vars_file" {
@@ -22,7 +22,7 @@ local "extra_args" {
     expression = var.ansible_vars_file != null ? ["-e", "@images/ansible/extra-vars.yml", "-e", "ansible_python_interpreter=/usr/bin/python3", "-e", var.ansible_vars_file] : ["-e", "@images/ansible/extra-vars.yml", "-e", "ansible_python_interpreter=/usr/bin/python3", "--scp-extra-args", "'-O'"]
 }
 
-source "googlecompute" "ansible-dev-tools-v252" {
+source "googlecompute" "ansible-dev-tools-pip" {
     project_id          = var.project_id
     source_image        = "rhel9"
     ssh_username        = "rhel"
@@ -32,7 +32,7 @@ source "googlecompute" "ansible-dev-tools-v252" {
 }
 
 build {
-    sources = ["sources.googlecompute.ansible-dev-tools-v252"]
+    sources = ["sources.googlecompute.ansible-dev-tools-pip"]
 
     provisioner "shell" {
         inline = [
@@ -41,7 +41,7 @@ build {
         ]
     }
     provisioner "ansible" {
-        playbook_file = "${path.root}/../ansible/ansible-dev-tools-setup.yml"
+        playbook_file = "${path.root}/../ansible/ansible-dev-tools-setup-pip.yml"
         user = "rhel"
       extra_arguments = local.extra_args
     }

@@ -3,7 +3,7 @@
   ansible.builtin.dnf:
     name:
       - "{{ codeserver_url }}"
-## commented for standalone dev-tools image      
+## commented for standalone dev-tools image
 #      - certbot
     state: present
     disable_gpg_check: true
@@ -83,6 +83,19 @@
   until: install_extension is not failed
   retries: 5
 
+- name: Install nginx server
+  ansible.builtin.dnf:
+    name: nginx
+    state: latest
+
+- name: Copy nginx configuration for VS Code Server
+  ansible.builtin.template:
+    src: nginx_instruqt.conf
+    dest: /etc/nginx/default.d/vscode.conf
+    owner: root
+    group: root
+    mode: "0644"
+
 - name: Daemon-reload, enable and start code-server
   ansible.builtin.systemd:
     name: code-server
@@ -90,11 +103,17 @@
     state: started
     daemon_reload: true
 
+- name: Daemon-reload, enable and start nginx
+  ansible.builtin.systemd:
+    name: nginx
+    enabled: true
+    state: restarted
+    daemon_reload: true
+
 ## commented for standalone dev-tools, might be needed for controller labs
-#- name: Editor block - update nginx configuration to support code server
-#  ansible.builtin.blockinfile:
-#    block: "{{ lookup('template', 'nginx_instruqt.conf') }}"
-#    dest: /etc/nginx/conf.d/automation-controller.nginx.conf
-#    insertbefore: "location / "
-#  when: aap_include_controller is defined and aap_include_controller | bool
+# - name: Editor block - update nginx configuration to support code server
+#   ansible.builtin.blockinfile:
+#     block: "{{ lookup('template', 'nginx_instruqt.conf') }}"
+#     dest: /etc/nginx/conf.d/automation-controller.nginx.conf
+#     insertbefore: "location / "
 
